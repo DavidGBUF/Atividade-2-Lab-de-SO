@@ -20,5 +20,6 @@ run:
 clean:
 	rm -f hello main
 
-# Regra para forçar a recompilação de todos os arquivos
-all: clean hello main run
+# Regra para compilar, executar e limpar
+all: clean hello main run clean
+
