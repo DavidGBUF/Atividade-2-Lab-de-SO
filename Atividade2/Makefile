@@ -1,5 +1,5 @@
 # Define o compilador C
-CC = gcc
+CC = clang
 
 # Define as opções de compilação
 CFLAGS = -Wall -std=c11
