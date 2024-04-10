@@ -1,10 +1,9 @@
 #include <stdio.h>
 
 
-int teste() {
+int main() {
   printf("Hello, world!\n");
   
 
   return 0;
 }
-
