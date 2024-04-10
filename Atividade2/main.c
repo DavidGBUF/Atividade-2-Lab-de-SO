@@ -32,8 +32,7 @@ int main() {
       printf("\nNumero de processo filho: %d\n", i+1);
       printf("Processo filho %d criado.\n", getpid());
       sleep(1);
-      // Executa um programa qualquer (substitua "programa" pelo nome do seu
-      // programa)
+      // Executa um programa hello )
       execl("./hello", "./hello", NULL);
 
       
