@@ -5,17 +5,20 @@ CC = gcc
 CFLAGS = -Wall -std=c11
 
 # Regra para compilar o hello.c
-hello: hello.c
+hello:
 	$(CC) $(CFLAGS) -o hello hello.c
 
 # Regra para compilar o main.c
-main: main.c
+main:
 	$(CC) $(CFLAGS) -o main main.c
 
 # Regra para executar o main
-run: main
+run:
 	./main
 
 # Regra para limpar os arquivos executáveis
 clean:
 	rm -f hello main
+
+# Regra para forçar a recompilação de todos os arquivos
+all: clean hello main run
