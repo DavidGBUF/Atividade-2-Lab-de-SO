@@ -1,16 +1,21 @@
-all: main
+# Define o compilador C
+CC = gcc
 
-CC = clang
-override CFLAGS += -g -Wno-everything -pthread -lm
+# Define as opções de compilação
+CFLAGS = -Wall -std=c11
 
-SRCS = $(shell find . -name '.ccls-cache' -type d -prune -o -type f -name '*.c' -print)
-HEADERS = $(shell find . -name '.ccls-cache' -type d -prune -o -type f -name '*.h' -print)
+# Regra para compilar o hello.c
+hello: hello.c
+	$(CC) $(CFLAGS) -o hello hello.c
 
-main: $(SRCS) $(HEADERS)
-	$(CC) $(CFLAGS) $(SRCS) -o "$@"
+# Regra para compilar o main.c
+main: main.c
+	$(CC) $(CFLAGS) -o main main.c
 
-main-debug: $(SRCS) $(HEADERS)
-	$(CC) $(CFLAGS) -O0 $(SRCS) -o "$@"
+# Regra para executar o main
+run: main
+	./main
 
+# Regra para limpar os arquivos executáveis
 clean:
-	rm -f main main-debug
+	rm -f hello main
