@@ -1,54 +1,76 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/wait.h>
-#include <unistd.h>
+#include<linux/module.h>   // included for all kernel modules
+#include<linux/init.h>    // included for __init and __exit macros
+#include<linux/kthread.h>  // included for threading related functions
+#include<linux/sched.h>   // included to create task_struct
+#include<linux/delay.h>   // included for the sleep/delay function in the thread
 
-int main() {
-  int n_processos, i;
+// array for task_struct to hold task info
+static struct task_struct kth_arr[4];
 
-  // Pergunta ao usuário quantos processos deseja criar
-  printf("Quantos processos você deseja criar? ");
-  scanf("%d", &n_processos);
+// long running function to be executed inside a thread, this will run for 30 secs. 
+int thread_function(void * idx) {
+ unsigned int i = 0;
+ int t_id = * (int * ) idx;
+ pid_t pid = getpid(); // Obtem o PID da thread
 
-  // Verifica se o número de processos é positivo
-  if (n_processos <= 0) {
-    printf("Erro: O número de processos deve ser positivo.\n");
-    return 1;
-  }
-
-  // Cria os processos filhos
-  for (i = 0; i < n_processos - 1; i++) {
-    pid_t pid = fork();
-    
-    // Erro na criação do processo
-    if (pid < 0) {
-      printf("Erro ao criar o processo filho");
-      return 1;
-    }
-
-    // Processo filho
-    else if (pid == 0) {
-      // Imprime o ID do processo filho
-      printf("\nNumero de processo filho: %d\n", i+1);
-      printf("Processo filho %d criado.\n", getpid());
-      sleep(1);
-      // Executa um programa hello )
-      execl("./hello", "./hello", NULL);
-
-      
-      return 1;
-    }
-  }
-
-  // Processo pai
-  // Espera todos os processos filhos terminarem
-  for (i = 0; i < n_processos; i++) {
-    wait(NULL);
-  }
-  
-  printf("Processo pai %d finalizado.\n", getpid());
-  printf("Todos os processos  foram finalizados.\n");
-  execl("./hello", "./hello", NULL);
-
-  return 0;
+ // kthread_should_stop call is important.
+ while (!kthread_should_stop()) {
+  printk(KERN_INFO "Thread %d Still running...! %d secs, PID: %d\n", t_id, i, pid); // Imprime o PID
+  i++;
+  if (i == 30)
+   break;
+  msleep(1000);
+ }
+ printk(KERN_INFO "thread %d stopped\n", t_id);
+ return 0;
 }
+
+// initialize one thread at a time.
+int initialize_thread(struct task_struct * kth, int idx) {
+ char th_name[20];
+ sprintf(th_name, "kthread_%d", idx);
+ kth = kthread_create(thread_function, & idx, (const char * ) th_name);
+ if (kth != NULL) {
+  wake_up_process(kth);
+  printk(KERN_INFO "%s is running\n", th_name);
+ } else {
+  printk(KERN_INFO "kthread %s could not be created\n", th_name);
+  return -1;
+ }
+ return 0;
+}
+
+// module init function
+static int __init mod_init(void) {
+ int i = 0;
+ printk(KERN_INFO "Initializing thread module\n");
+ for (i = 0; i < 4; i++) {
+	// initialize one thread at a time.
+  if (initialize_thread( & kth_arr[i], i) == -1) {
+   return -1;
+  }
+ }
+ printk(KERN_INFO "all of the threads are running\n");
+ return 0;
+}
+
+// module exit function.
+static void __exit mod_exit(void) {
+ int i = 0;
+ int ret = 0;
+ printk(KERN_INFO "exiting thread module\n");
+ for (i = 0; i < 4; i++) {
+	// stop all of the threads before removing the module.
+  ret = kthread_stop( & kth_arr[i]);
+  if (!ret) {
+   printk("can't stop thread %d", i);
+  }
+ }
+ printk(KERN_INFO "stopped all of the threads\n");
+}
+
+MODULE_LICENSE("GPL");
+
+
+module_init(mod_init);
+module_exit(mod_exit);
